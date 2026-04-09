@@ -1,0 +1,3 @@
+# Placeholder
+# Se bo sung dependency khi bat dau code chinh thuc.
+# Du kien co: langgraph, streamlit/gradio, pytest, pypdf2, pytesseract.
