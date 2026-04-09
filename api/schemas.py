@@ -24,9 +24,3 @@ class StudentProfile(BaseModel):
     student_class: str = Field(alias="class")
     parent_id: str
     history_priority_engagement: Dict[str, str]
-
-class AgentState(BaseModel):
-    """Trạng thái luân chuyển trong LangGraph"""
-    raw_notification: NotificationPayload
-    student_context: StudentProfile
-    final_output: Optional[Dict] = None
