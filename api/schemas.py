@@ -23,4 +23,5 @@ class StudentProfile(BaseModel):
     full_name: str
     student_class: str = Field(alias="class")
     parent_id: str
+    interests: List[str]
     history_priority_engagement: Dict[str, str]

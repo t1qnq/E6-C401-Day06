@@ -31,6 +31,26 @@ class DataLoader:
         (Trường A gửi JSON khác Trường B nhưng vào Graph phải giống nhau)
         """
         return NotificationPayload(**raw_data)
+    
+    def get_notifications_by_category(self, category: str) -> List[NotificationPayload]:
+        """Lọc thông báo theo loại (ví dụ: chỉ lấy thông báo khẩn cấp)"""
+        return [
+            NotificationPayload(**n) 
+            for n in self._data["notifications"] 
+            if n["category"] == category
+        ]
+
+    def get_notifications_for_student(self, student_id: str) -> List[NotificationPayload]:
+        """
+        Giả lập việc filter thông báo riêng cho từng học sinh.
+        Trong thực tế, một số thông báo là chung, một số là riêng.
+        """
+        # Logic đơn giản: Trả về ngẫu nhiên 10 thông báo hoặc thông báo có chứa tên/ID học sinh
+        relevant = []
+        for n in self._data["notifications"]:
+            if student_id in n["content"] or n["category"] == "emergency":
+                relevant.append(NotificationPayload(**n))
+        return relevant
 
 # Singleton instance để sử dụng trong toàn bộ project
 data_loader = DataLoader()
