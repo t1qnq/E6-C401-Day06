@@ -1,1 +1,1 @@
-"""Shared constants for prioritization domain."""
+"""Shared constants across project domains."""
