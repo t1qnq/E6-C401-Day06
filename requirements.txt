@@ -1,3 +1,16 @@
-# Placeholder
-# Se bo sung dependency khi bat dau code chinh thuc.
-# Du kien co: langgraph, streamlit/gradio, pytest, pypdf2, pytesseract.
+# === Core framework ===
+langgraph>=0.4.0
+
+# === File parser (nodes/file_parser.py) ===
+pdfplumber==0.11.9
+pymupdf==1.27.2.2
+openai==2.30.0
+
+streamlit>=1.45.0
+
+pytest>=9.0.0
+langgraph>=0.2.0
+pytest>=8.0.0
+openai>=1.40.0
+anthropic>=0.34.0
+google-generativeai>=0.7.2
