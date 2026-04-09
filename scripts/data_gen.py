@@ -1,7 +1,15 @@
 import json
 import random
+import sys
 from faker import Faker
 from datetime import datetime, timedelta
+from pathlib import Path
+
+# Cấu hình đường dẫn tuyệt đối để tránh lỗi khi chạy script từ các thư mục khác nhau
+main_dir = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(main_dir))
+
+from api.schemas import ReceiverScope
 
 fake = Faker(['vi_VN']) # Sử dụng tiếng Việt
 
@@ -14,9 +22,12 @@ def generate_mock_db(num_students=50, num_notifications=100):
     # 1. Tạo danh sách học sinh
     classes = [f"{grade}{letter}" for grade in range(1, 13) for letter in ["A1", "A2", "B1"]]
     categories = ["finance", "academic", "extracurricular", "emergency", "health"]
+    all_student_ids = [] # Danh sách lưu trữ toàn bộ ID học sinh
     
     for i in range(num_students):
         stu_id = f"STU{str(i+1).zfill(3)}"
+        all_student_ids.append(stu_id)
+        
         data["students"].append({
             "student_id": stu_id,
             "full_name": fake.name(),
@@ -50,7 +61,7 @@ def generate_mock_db(num_students=50, num_notifications=100):
         },
         {
             "category": "extracurricular",
-            "sender": "Đội Thiếu niên/Đoàn Thanh niên",
+            "sender": "Đoàn Thanh niên",
             "titles": ["Đăng ký tham quan dã ngoại", "Giải bóng đá học sinh", "Hội diễn văn nghệ"],
             "content_fmt": "Nhà trường tổ chức hoạt động {activity} tại {location}. Phí tham dự là {amount} VNĐ. Hạn đăng ký cuối cùng là {date}."
         }
@@ -60,12 +71,30 @@ def generate_mock_db(num_students=50, num_notifications=100):
         template = random.choice(notif_templates)
         notif_id = f"NOTIF_{str(i+1).zfill(4)}"
         
-        # Tạo ngày ngẫu nhiên trong 30 ngày qua
         days_ago = random.randint(0, 30)
         timestamp = (datetime.now() - timedelta(days=days_ago)).isoformat()
         
-        # Điền dữ liệu vào template
+        # Chọn ngẫu nhiên 1 học sinh để điền vào nội dung (nếu template cần)
         target_student = random.choice(data["students"])
+        
+        # Xác định Scope (Phạm vi)
+        scope = random.choice(list(ReceiverScope))
+        
+        # LOGIC FIX: Nếu là thông báo tài chính, bắt buộc phải gửi đích danh (INDIVIDUAL)
+        if template["category"] == "finance":
+            scope = ReceiverScope.INDIVIDUAL
+            
+        # Tạo danh sách ID người nhận dựa trên Scope đã chọn
+        receiver_ids = []
+        if scope == ReceiverScope.GRADE:
+            receiver_ids = [random.choice(["10", "11", "12"])]
+        elif scope == ReceiverScope.CLASS:
+            receiver_ids = [random.choice(classes)]
+        elif scope == ReceiverScope.INDIVIDUAL:
+            # Đảm bảo ID nhận khớp với tên học sinh trong nội dung tin nhắn
+            receiver_ids = [target_student["student_id"]] 
+
+        # Điền dữ liệu vào template
         content = template["content_fmt"].format(
             month=random.randint(1, 12),
             amount=f"{random.randint(5, 50) * 100000:,}",
@@ -85,15 +114,21 @@ def generate_mock_db(num_students=50, num_notifications=100):
             "timestamp": timestamp,
             "title": random.choice(template["titles"]).format(month=random.randint(1, 12)),
             "content": content,
+            "receiver_scope": scope.value, # Dùng .value để lưu vào JSON dạng string
+            "receiver_ids": receiver_ids,
             "attachments": [{"type": "pdf", "url": f"https://api.school.edu/files/{notif_id}.pdf"}] if random.random() > 0.5 else [],
             "category": template["category"]
         })
 
-    # 3. Lưu ra file
-    with open('api/data/mock_data.json', 'w', encoding='utf-8') as f:
+    # 3. Tạo thư mục nếu chưa tồn tại và lưu file
+    output_path = main_dir / "api" / "data" / "mock_data.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     
     print(f"Đã tạo xong {num_students} học sinh và {num_notifications} thông báo!")
+    print(f"File được lưu tại: {output_path}")
 
 if __name__ == "__main__":
     generate_mock_db(num_students=100, num_notifications=500)

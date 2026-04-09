@@ -1,7 +1,7 @@
 import json
 import os
 from typing import List, Optional
-from schemas import NotificationPayload, StudentProfile
+from schemas import NotificationPayload, StudentProfile, ReceiverScope
 
 class DataLoader:
     def __init__(self, mock_path: str = "data/mock_data.json"):
@@ -41,16 +41,30 @@ class DataLoader:
         ]
 
     def get_notifications_for_student(self, student_id: str) -> List[NotificationPayload]:
-        """
-        Giả lập việc filter thông báo riêng cho từng học sinh.
-        Trong thực tế, một số thông báo là chung, một số là riêng.
-        """
-        # Logic đơn giản: Trả về ngẫu nhiên 10 thông báo hoặc thông báo có chứa tên/ID học sinh
-        relevant = []
-        for n in self._data["notifications"]:
-            if student_id in n["content"] or n["category"] == "emergency":
-                relevant.append(NotificationPayload(**n))
-        return relevant
+        student = self.get_student_by_id(student_id)
+        if not student:
+            return []
+
+        student_class = student.student_class # Ví dụ: "12A1"
+        student_grade = student_class[:2]    # Ví dụ: "12"
+
+        relevant_notifications = []
+        
+        for n_dict in self._data["notifications"]:
+            n = NotificationPayload(**n_dict)
+            
+            # Kiểm tra quyền nhận thông báo
+            is_relevant = (
+                n.receiver_scope == ReceiverScope.ALL or
+                (n.receiver_scope == ReceiverScope.GRADE and student_grade in n.receiver_ids) or
+                (n.receiver_scope == ReceiverScope.CLASS and student_class in n.receiver_ids) or
+                (n.receiver_scope == ReceiverScope.INDIVIDUAL and student_id in n.receiver_ids)
+            )
+            
+            if is_relevant:
+                relevant_notifications.append(n)
+                
+        return relevant_notifications
 
 # Singleton instance để sử dụng trong toàn bộ project
 data_loader = DataLoader()

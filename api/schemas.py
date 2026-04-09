@@ -1,10 +1,17 @@
 from pydantic import BaseModel, Field
+from enum import Enum
 from typing import List, Optional, Dict
 from datetime import datetime
 
 class Attachment(BaseModel):
     type: str
     url: str
+
+class ReceiverScope(str, Enum):
+    ALL = "all"           
+    GRADE = "grade"       
+    CLASS = "class"       
+    INDIVIDUAL = "student" 
 
 class NotificationPayload(BaseModel):
     id: str
@@ -14,6 +21,8 @@ class NotificationPayload(BaseModel):
     content: str
     attachments: List[Attachment] = []
     category: str
+    receiver_scope: ReceiverScope
+    receiver_ids: List[str] = []
     # Dữ liệu sau khi xử lý bởi AI sẽ được điền vào đây
     priority: Optional[str] = None  # Cao, Trung bình, Thấp
     summary: Optional[str] = None
