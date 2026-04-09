@@ -1,8 +1,0 @@
-{
-  "description": "File nay danh cho mock data thong bao nha truong.",
-  "todo": [
-    "Tao danh sach notifications de test graph.",
-    "Bao gom cac truong: id, title, content, created_at, location, student_id, attachment_path.",
-    "Bo sung du lieu cho nhieu tinh huong: hoc phi, hop, ngoai khoa, thong bao thuong."
-  ]
-}
