@@ -8,3 +8,8 @@ Can thuc hien:
 - Tra ket qua priority vao state de node sau su dung.
 - Viet test happy path va failure path cho node nay.
 """
+
+def prioritize_notification(state: dict) -> dict:
+    """Mock node phân loại độ ưu tiên"""
+    print("--- [Node] Prioritize Notification Running ---")
+    return {"priority_level": "High", "priority_confidence": 0.9}
