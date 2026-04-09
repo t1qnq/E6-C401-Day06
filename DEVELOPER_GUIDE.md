@@ -62,6 +62,3 @@ Sử dụng thư viện `langchain_openai` hoặc API trực tiếp để xử l
     python graph.py
     ```
 5.  Kiểm tra terminal xem các Node của bạn đã in ra kết quả thật (thay vì kết quả giả định) chưa.
-
-> [!TIP]
-> **Best Practice cho Hackathon:** Hãy bắt đầu bằng những Prompt rất đơn giản để đảm bảo luồng thông tin đi thông suốt từ đầu đến cuối trước. Khi hệ thống đã chạy trơn tru, hãy dành thời gian "vuốt ve" (fine-tune) lại câu từ của Prompt cho hay hơn. Chúc team E06 code vui vẻ!

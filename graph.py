@@ -2,6 +2,12 @@
 Muc dich file: Dinh nghia LangGraph 2 Giai doan (Push Model: Teacher -> Bot -> Parent).
 """
 
+# Load bien moi truong (.env) TRUOC KHI import langgraph
+# de LangSmith tu dong nhan duoc LANGCHAIN_API_KEY
+import os
+from dotenv import load_dotenv
+load_dotenv()  # Doc file .env tai thu muc hien tai
+
 from typing import Annotated, TypedDict, List, Optional
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
