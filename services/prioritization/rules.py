@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, Optional, Tuple
 
 from core.constants.prioritization import (
@@ -29,13 +30,18 @@ def extract_text_from_state(state: Dict[str, Any]) -> str:
     return "\n".join(parts).strip()
 
 
+def _whole_word_match(keyword: str, text: str) -> bool:
+    pattern = r"\b" + re.escape(keyword) + r"\b"
+    return bool(re.search(pattern, text))
+
+
 def keyword_priority(text: str) -> Tuple[Optional[str], float, str]:
     normalized = normalize_text(text)
-    if any(keyword in normalized for keyword in HIGH_KEYWORDS):
+    if any(_whole_word_match(keyword, normalized) for keyword in HIGH_KEYWORDS):
         return "HIGH", 0.97, "vinschool_high_keyword"
-    if any(keyword in normalized for keyword in MEDIUM_KEYWORDS):
+    if any(_whole_word_match(keyword, normalized) for keyword in MEDIUM_KEYWORDS):
         return "MEDIUM", 0.80, "vinschool_medium_keyword"
-    if any(keyword in normalized for keyword in LOW_KEYWORDS):
+    if any(_whole_word_match(keyword, normalized) for keyword in LOW_KEYWORDS):
         return "LOW", 0.70, "vinschool_low_keyword"
     return None, 0.0, "no_keyword_match"
 
