@@ -18,32 +18,63 @@ load_dotenv()
 # 1. Dinh nghia Mermaid DUNG VOI GRAPH.PY
 # ==========================================
 MERMAID_CODE = """graph TD
-    START(["▶ __start__"])
-    parse_attachment["parse_attachment"]
-    prioritize_notification["prioritize_notification"]
-    summarize_brief["summarize_brief"]
-    summarize_detailed["summarize_detailed"]
-    scheduler["scheduler"]
-    handle_feedback["handle_feedback"]
-    END(["⏹ __end__"])
+    START(["▶ Teacher Gửi Thông Báo"])
+    
+    parse_attachment["parse_attachment<br/>(Đọc file đính kèm)"]
+    prioritize_notification["prioritize_notification<br/>(Phân loại ưu tiên)"]
+    
+    TEACHER["teacher_intervention<br/>(Giáo viên xác định lại)"]
+    
+    scheduler["scheduler<br/>(Trích xuất lịch & sự kiện)"]
+    summarize_brief["summarize_brief<br/>(Tóm tắt ngắn gọn)"]
+    
+    PARENT_RECEIVE(["🔔 Phụ huynh nhận thông báo<br/>(Push Notification)"])
+    
+    summarize_detailed["summarize_detailed<br/>(Tóm tắt chi tiết)"]
+    handle_feedback["handle_feedback<br/>(Ghi nhận phản hồi)"]
+    
+    DB[("Learned Keywords & Rules<br/>(Cơ sở dữ liệu học tập)")]
+    
+    END(["⏹ Hoàn tất"])
 
-    START -->|"attachments != empty"| parse_attachment
-    START -->|"attachments == empty"| prioritize_notification
+    %% Luồng chính
+    START -->|"Có File đính kèm"| parse_attachment
+    START -->|"Không có file"| prioritize_notification
     parse_attachment --> prioritize_notification
-    prioritize_notification --> summarize_brief
-    summarize_brief -->|"user_request_detail = False"| END
-    summarize_brief -->|"user_request_detail = True"| summarize_detailed
-    summarize_detailed --> scheduler
-    scheduler --> handle_feedback
+    
+    %% Luồng rẽ nhánh Prioritize
+    prioritize_notification -->|"AI Tự tin"| scheduler
+    prioritize_notification -.->|"Manual Required"| TEACHER
+    TEACHER --> scheduler
+    
+    %% Luồng Giai đoạn 1 (Push)
+    scheduler --> summarize_brief
+    summarize_brief --> PARENT_RECEIVE
+    
+    %% Luồng Giai đoạn 2 (On-demand)
+    PARENT_RECEIVE -->|"Phụ huynh chọn Xem chi tiết"| summarize_detailed
+    PARENT_RECEIVE -->|"Bỏ qua / Đã đọc"| END
+    
+    summarize_detailed --> handle_feedback
     handle_feedback --> END
+
+    %% Feedback Loop
+    handle_feedback -.->|"Gửi tín hiệu học tập"| DB
+    DB -.->|"Cập nhật Guardrails"| prioritize_notification
 
     classDef startEnd fill:#1A5276,color:#fff,stroke:#154360,stroke-width:2px,rx:20
     classDef phase1 fill:#EAFAF1,stroke:#27AE60,stroke-width:2px,color:#145A32,rx:6
     classDef phase2 fill:#EBF5FB,stroke:#2E86C1,stroke-width:2px,color:#1B4F72,rx:6
+    classDef manual fill:#F2F3F4,stroke:#707B7C,stroke-width:2px,color:#1B2631,rx:6
+    classDef interaction fill:#FBEEE6,stroke:#E67E22,stroke-width:3px,color:#7E5109,rx:10
+    classDef database fill:#FFF9C4,stroke:#FBC02D,stroke-dasharray: 5 5,color:#5D4037,rx:6
 
     class START,END startEnd
-    class parse_attachment,prioritize_notification,summarize_brief phase1
-    class summarize_detailed,scheduler,handle_feedback phase2
+    class parse_attachment,prioritize_notification,scheduler,summarize_brief phase1
+    class summarize_detailed,handle_feedback phase2
+    class TEACHER manual
+    class PARENT_RECEIVE interaction
+    class DB database
 """
 
 # ==========================================

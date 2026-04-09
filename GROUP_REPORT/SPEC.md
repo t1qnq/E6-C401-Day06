@@ -75,7 +75,9 @@ Phụ huynh gặp khó khăn trong việc nắm bắt nhanh và thường xuyên
 | Độ chính xác phân loại ưu tiên | > 90% (Gắn nhãn đúng Cao/TB/Thấp) | < 80% (Nguy cơ phụ huynh lỡ việc gấp) |
 | Tỷ lệ tóm tắt đúng ý chính | > 85% (Bao phủ đủ 80% Entity quan trọng) | < 75% (Phụ huynh vẫn phải đọc lại file gốc) |
 | Độ trễ phản hồi (Latency) | < 3 giây (Thời gian load kết quả) | > 5 giây (Trải nghiệm tệ, gây ức chế) |
-
+| Zero False-Negative cho Tin khẩn | 0% (Tuyệt đối không gắn nhãn "Thấp" cho tin Y tế/Kỷ luật) | > 0% (Chỉ 1 lần báo trễ tin con nằm viện, hệ thống sẽ mất hoàn toàn niềm tin) |
+| Tỷ lệ mở tài liệu gốc | < 20% (Phụ huynh chỉ cần đọc tóm tắt là đủ hiểu để hành động) | > 40% (Chứng tỏ bản tóm tắt quá sơ sài hoặc sai lệch khiến họ phải tự check lại PDF/Word) |
+| Tỷ lệ lọt thông báo "Rác" (Irrelevance Rate) | < 2% (Phụ huynh hiếm khi nhận nhầm thông báo của khối/lớp khác) | > 15% (Trải nghiệm bị spam, phủ nhận tác dụng "Cá nhân hóa" của AI) |
 ---
 
 ## 4. Top 3 Failure Modes
@@ -102,12 +104,12 @@ Phụ huynh gặp khó khăn trong việc nắm bắt nhanh và thường xuyên
 
 ### Mục tiêu Sản phẩm
 
-Giải quyết triệt để tình trạng quá tải thông tin của phụ huynh Vinschool bằng một luồng phân phối thông báo thông minh được sức mạnh bởi AI. Sản phẩm không thay thế giao tiếp giữa giáo viên - phụ huynh mà đóng vai trò **màng lọc (filter)** để tôn vinh các thông tin quan trọng nhất.
+Giải quyết triệt để tình trạng quá tải thông tin của phụ huynh Vinschool bằng một luồng phân phối thông báo thông minh được sức mạnh bởi AI. Sản phẩm không thay thế giao tiếp giữa giáo viên - phụ huynh mà đóng vai trò filter các thông tin quan trọng nhất.
 
 ### Kiến trúc Tính năng Cốt lõi
 
 **AI Prioritization Engine**
-Mô hình tự động phân loại thông báo mới thành 3 luồng ưu tiên (🔴 Cao / 🟡 Trung bình / 🟢 Thấp) dựa trên phân tích ngữ nghĩa (Semantic Analysis) và lịch sử hành vi của người dùng.
+Mô hình tự động phân loại thông báo mới thành 3 luồng ưu tiên (Cao / Trung bình / Thấp) dựa trên phân tích ngữ nghĩa (Semantic Analysis) và lịch sử hành vi của người dùng.
 
 **Smart Summarizer** *(Powered by GPT-4o mini)*
 Trích xuất văn bản từ nội dung tin nhắn và tệp đính kèm (PDF / Word / Image), tổng hợp thành 3–4 gạch đầu dòng súc tích, bao hàm đầy đủ thời gian, địa điểm và hành động cần làm.
