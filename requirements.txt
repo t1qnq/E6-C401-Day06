@@ -1,6 +1,0 @@
-# Placeholder
-# Se bo sung dependency khi bat dau code chinh thuc.
-# Du kien co: langgraph, streamlit/gradio, pytest, pypdf2, pytesseract.
-
-# Ghi JSONL learning signal an toàn khi concurrent (node feedback)
-filelock>=3.13.0
