@@ -11,6 +11,12 @@ class LlmClassification(TypedDict):
     model: str
 
 
+class ExplainabilityPayload(TypedDict):
+    summary: str
+    source: str
+    evidence: list[str]
+
+
 class PrioritizationResult(TypedDict):
     priority_level: str
     priority_confidence: float
@@ -19,3 +25,4 @@ class PrioritizationResult(TypedDict):
     priority_provider: NotRequired[str]
     priority_model: NotRequired[str]
     priority_error: NotRequired[str]
+    priority_explainability: NotRequired[ExplainabilityPayload]

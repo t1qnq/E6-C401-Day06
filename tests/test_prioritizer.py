@@ -1,4 +1,5 @@
 from nodes import prioritizer
+from nodes.feedback import handle_feedback
 from utils import llm_providers
 
 
@@ -203,3 +204,68 @@ def test_utils_load_prompt_multiple_prompt_names(tmp_path):
         load_prompt("summarizer_system_prompt", prompt_dir=tmp_path)
         == "PROMPT_SUMMARIZER"
     )
+
+
+def test_context_override_when_llm_confidence_low(monkeypatch):
+    def fake_llm(_: str, __: str):
+        return {
+            "priority": "LOW",
+            "confidence": 0.5,
+            "reason": "Unclear text",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+        }
+
+    monkeypatch.setattr(prioritizer, "classify_with_provider_chain", fake_llm)
+    state = {
+        "teacher_note": "Thong bao cap nhat",
+        "notification": {
+            "category": "finance",
+            "timestamp": "2026-04-09T08:00:00Z",
+            "receiver_scope": "student",
+        },
+        "student_profile": {"history_priority_engagement": {"finance": "high"}},
+    }
+
+    result = prioritizer.prioritize_notification(state)
+    assert result["priority_source"] == "context_override"
+    assert result["priority_level"] in {"High", "Medium"}
+
+
+def test_explainability_payload_exists(monkeypatch):
+    def fake_llm(_: str, __: str):
+        return {
+            "priority": "MEDIUM",
+            "confidence": 0.9,
+            "reason": "Meeting update",
+            "provider": "openai",
+            "model": "gpt-4o-mini",
+        }
+
+    monkeypatch.setattr(prioritizer, "classify_with_provider_chain", fake_llm)
+    state = {"teacher_note": "Thong bao hop phu huynh"}
+
+    result = prioritizer.prioritize_notification(state)
+    assert "priority_explainability" in result
+    assert "summary" in result["priority_explainability"]
+    assert isinstance(result["priority_explainability"].get("evidence", []), list)
+
+
+def test_handle_feedback_records_learning_signal(monkeypatch):
+    recorded = {"called": False}
+
+    def fake_append(_signal):
+        recorded["called"] = True
+
+    monkeypatch.setattr("nodes.feedback.feedback_learner.append_feedback_signal", fake_append)
+    monkeypatch.setattr("nodes.feedback.feedback_learner.maybe_rebuild", lambda: None)
+
+    state = {
+        "feedback_action": "correct",
+        "corrected_priority": "HIGH",
+        "priority_level": "LOW",
+        "teacher_note": "Thong bao hoc phi",
+    }
+    result = handle_feedback(state)
+    assert recorded["called"] is True
+    assert result["feedback_recorded"] is True
