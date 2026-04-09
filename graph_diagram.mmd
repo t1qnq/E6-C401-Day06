@@ -1,0 +1,27 @@
+graph TD
+    START(["▶ __start__"])
+    parse_attachment["parse_attachment"]
+    prioritize_notification["prioritize_notification"]
+    summarize_brief["summarize_brief"]
+    summarize_detailed["summarize_detailed"]
+    scheduler["scheduler"]
+    handle_feedback["handle_feedback"]
+    END(["⏹ __end__"])
+
+    START -->|"attachments != empty"| parse_attachment
+    START -->|"attachments == empty"| prioritize_notification
+    parse_attachment --> prioritize_notification
+    prioritize_notification --> summarize_brief
+    summarize_brief -->|"user_request_detail = False"| END
+    summarize_brief -->|"user_request_detail = True"| summarize_detailed
+    summarize_detailed --> scheduler
+    scheduler --> handle_feedback
+    handle_feedback --> END
+
+    classDef startEnd fill:#1A5276,color:#fff,stroke:#154360,stroke-width:2px,rx:20
+    classDef phase1 fill:#EAFAF1,stroke:#27AE60,stroke-width:2px,color:#145A32,rx:6
+    classDef phase2 fill:#EBF5FB,stroke:#2E86C1,stroke-width:2px,color:#1B4F72,rx:6
+
+    class START,END startEnd
+    class parse_attachment,prioritize_notification,summarize_brief phase1
+    class summarize_detailed,scheduler,handle_feedback phase2

@@ -1,0 +1,5 @@
+.venv
+data/feedback/
+*.pyc
+__pycache__/
+.env
