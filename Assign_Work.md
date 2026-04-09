@@ -65,7 +65,7 @@
 * Lưu feedback upvote/downvote của phụ huynh.
 * Cập nhật priority dựa theo correction của người dùng.
 * Ghi log learning signal để fine-tune sau.
-> **Deliverable:** File `nodes/feedback.py`.
+> **Deliverable:** File `nodes/feedback.py`.    
 
 ### 7. Huy
 **Vai trò:** Frontend · UI / Demo  
