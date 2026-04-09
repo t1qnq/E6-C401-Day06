@@ -16,7 +16,7 @@ import json
 # Import các node (hiện tại đang là mock function)
 from nodes.prioritizer import prioritize_notification
 from nodes.summarizer import summarize_brief, summarize_detailed
-from nodes.file_parser import parse_attachment
+from nodes.file_parser import parse_attachment_node as parse_attachment
 from nodes.feedback import handle_feedback
 
 # ==========================================

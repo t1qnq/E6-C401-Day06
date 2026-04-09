@@ -1,9 +1,10 @@
 import os
 from typing import List
 
-DEFAULT_PROVIDER_ORDER = ["openai", "openrouter", "anthropic", "google"]
+DEFAULT_PROVIDER_ORDER = ["deepseek", "openai", "openrouter", "anthropic", "google"]
 
 DEFAULT_MODELS = {
+    "deepseek": "deepseek-chat",
     "openai": "gpt-4o-mini",
     "openrouter": "openai/gpt-4o-mini",
     "anthropic": "claude-3-5-haiku-latest",
@@ -19,6 +20,7 @@ def get_provider_order() -> List[str]:
 
 def get_model_name(provider: str) -> str:
     env_map = {
+        "deepseek": "DEEPSEEK_MODEL",
         "openai": "OPENAI_MODEL",
         "openrouter": "OPENROUTER_MODEL",
         "anthropic": "ANTHROPIC_MODEL",

@@ -37,15 +37,7 @@ def llm_summarize_json(
     if force_local:
         return "disabled", {}
 
-    api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
-    if not api_key:
-        return "no_api_key", {}
-
-    try:
-        module = importlib.import_module("langchain_openrouter")
-        ChatOpenRouter = getattr(module, "ChatOpenRouter")
-    except Exception:
-        return "missing_dependency", {}
+    provider = os.getenv("SUMMARIZER_PROVIDER", "openrouter").strip().lower()
 
     system_prompt = load_prompt(
         prompt_name="summarizer_system_prompt",
@@ -60,6 +52,44 @@ def llm_summarize_json(
         "notification": notification,
         "text": text,
     }
+
+    # --- DeepSeek path (OpenAI-compatible) ---
+    if provider == "deepseek":
+        api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+        if not api_key:
+            return "no_api_key", {}
+
+        try:
+            from openai import OpenAI  # type: ignore[import-not-found]
+
+            client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+            deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+            response = client.chat.completions.create(
+                model=deepseek_model,
+                temperature=0,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+                ],
+            )
+            content = response.choices[0].message.content or ""
+            parsed = parse_llm_json(content)
+            if not isinstance(parsed, dict):
+                return "invalid_json", {}
+            return "ok", parsed
+        except Exception:
+            return "llm_error", {}
+
+    # --- OpenRouter path (legacy default) ---
+    api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+    if not api_key:
+        return "no_api_key", {}
+
+    try:
+        module = importlib.import_module("langchain_openrouter")
+        ChatOpenRouter = getattr(module, "ChatOpenRouter")
+    except Exception:
+        return "missing_dependency", {}
 
     try:
         llm = ChatOpenRouter(

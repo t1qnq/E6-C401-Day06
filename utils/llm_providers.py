@@ -59,6 +59,38 @@ def classify_openai(text: str, system_prompt: str) -> LlmClassification:
     }
 
 
+def classify_deepseek(text: str, system_prompt: str) -> LlmClassification:
+    """DeepSeek uses OpenAI-compatible API at https://api.deepseek.com."""
+    from openai import OpenAI  # type: ignore[import-not-found]
+
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise RuntimeError("DEEPSEEK_API_KEY is not set")
+
+    model = get_model_name("deepseek")
+    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    user_prompt = f"Notification text:\n{text}"
+
+    response = client.chat.completions.create(
+        model=model,
+        temperature=0,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+
+    content = response.choices[0].message.content or ""
+    parsed = parse_llm_json(content)
+    return {
+        "priority": parsed["priority"],
+        "confidence": parsed["confidence"],
+        "reason": parsed["reason"],
+        "provider": "deepseek",
+        "model": model,
+    }
+
+
 def classify_openrouter(text: str, system_prompt: str) -> LlmClassification:
     from openai import OpenAI  # type: ignore[import-not-found]
 
@@ -160,6 +192,7 @@ def classify_google(text: str, system_prompt: str) -> LlmClassification:
 
 def classify_with_provider_chain(text: str, system_prompt: str) -> LlmClassification:
     provider_impl = {
+        "deepseek": classify_deepseek,
         "openai": classify_openai,
         "openrouter": classify_openrouter,
         "anthropic": classify_anthropic,
