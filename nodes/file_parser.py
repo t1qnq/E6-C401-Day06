@@ -258,14 +258,30 @@ class PdfPlumberParser(BaseParser):
     def _extract(file: bytes, pdfplumber) -> ParseResult:
         """Logic trich xuat text + bang bieu tu PDF chuan."""
         with pdfplumber.open(io.BytesIO(file)) as pdf:
-            # --- Kiem tra mat khau ---
-            if pdf.doc.is_encrypted and not pdf.doc.authenticate(""):
-                return ParseResult.fail(
-                    ErrorCode.PDF_PASSWORD_PROTECTED,
-                    "Không thể đọc tệp PDF do có mật khẩu bảo vệ.",
-                    file_type="pdf",
-                    parser_used="pdfplumber",
-                )
+            # --- Kiem tra mat khau (compatible voi pdfminer ca cu lan moi) ---
+            # pdfminer < 20201018: pdf.doc.is_encrypted
+            # pdfminer >= 20201018: pdf.doc.encryption (None neu khong co mat khau)
+            try:
+                doc = pdf.doc
+                if hasattr(doc, "is_encrypted"):
+                    is_encrypted = bool(doc.is_encrypted)
+                else:
+                    is_encrypted = doc.encryption is not None
+            except Exception:
+                is_encrypted = False
+
+            if is_encrypted:
+                try:
+                    authenticated = pdf.doc.authenticate("")
+                except Exception:
+                    authenticated = False
+                if not authenticated:
+                    return ParseResult.fail(
+                        ErrorCode.PDF_PASSWORD_PROTECTED,
+                        "Không thể đọc tệp PDF do có mật khẩu bảo vệ.",
+                        file_type="pdf",
+                        parser_used="pdfplumber",
+                    )
 
             pages_text: List[str] = []
             tables_md: List[str] = []
@@ -412,7 +428,8 @@ def parse_attachment_node(state: Dict[str, Any]) -> Dict[str, Any]:
     LangGraph node wrapper.
 
     Doc state["attachment"] → goi parse_attachment → tra ve:
-      - attachment_text  : str   (noi dung trich xuat)
+      - extracted_text   : str   (key chinh duoc doc boi prioritizer + summarizer)
+      - attachment_text  : str   (alias de hien thi / audit)
       - parser_status    : dict  (ket qua day du theo spec)
     """
     attachment = state.get("attachment")
@@ -422,7 +439,7 @@ def parse_attachment_node(state: Dict[str, Any]) -> Dict[str, Any]:
             ErrorCode.FILE_CORRUPTED,
             "Không có file đính kèm trong state.",
         ).to_dict()
-        return {"attachment_text": "", "parser_status": result}
+        return {"extracted_text": "", "attachment_text": "", "parser_status": result}
 
     result = parse_attachment(
         file=attachment.get("file", b""),
@@ -430,7 +447,14 @@ def parse_attachment_node(state: Dict[str, Any]) -> Dict[str, Any]:
         file_name=attachment.get("file_name"),
     )
 
+    extracted = result["content"]
+
     return {
-        "attachment_text": result["content"],
+        # "extracted_text" la key duoc prioritizer (extract_text_from_state)
+        # va summarizer (notification_text) doc - phai co de file content duoc su dung
+        "extracted_text": extracted,
+        # "attachment_text" giu lai de audit / hien thi tren UI
+        "attachment_text": extracted,
         "parser_status": result,
     }
+

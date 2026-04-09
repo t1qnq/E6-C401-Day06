@@ -88,16 +88,40 @@ def run_phase1_generator(state: dict) -> Generator[Dict[str, Any], None, None]:
         state["_performance_metrics"] = metrics
         
     else:
-        # Mock execution timeline
+        # Mock execution timeline (no API key → dùng mock prioritize/summarize,
+        # nhưng vẫn parse file thật nếu có attachment)
         time.sleep(0.5)
-        # Mock parse attachment (assuming input could have attachments)
-        has_attachment = bool(state.get("attachments"))
-        text = state.get("teacher_note", "N/A")
-        
+
+        has_attachment = bool(state.get("attachment"))
+        text = state.get("teacher_note", "") or ""
+
         if has_attachment:
-            yield {"type": "mock_step", "node": "parse_attachment", "status": "success", "desc": "Parsed PDF attachment."}
-            text += " (Parsed attachment text)"
-        
+            att = state["attachment"]
+            fname = att.get("file_name", "file")
+
+            # Gọi parse_attachment thật để extract text từ bytes thực
+            try:
+                from nodes.file_parser import parse_attachment
+                parse_result = parse_attachment(
+                    file=att.get("file", b""),
+                    mime_type=att.get("mime_type", "application/octet-stream"),
+                    file_name=fname,
+                )
+                extracted = parse_result.get("content", "")
+                if extracted:
+                    text = (text + "\n" + extracted).strip() if text else extracted
+                    state["extracted_text"] = extracted
+                    yield {"type": "mock_step", "node": "parse_attachment", "status": "success",
+                           "desc": f"✅ Trích xuất thành công: {fname} ({len(extracted)} ký tự)"}
+                else:
+                    err = parse_result.get("error") or {}
+                    yield {"type": "mock_step", "node": "parse_attachment", "status": "warning",
+                           "desc": f"⚠️ Không đọc được nội dung từ {fname}: {err.get('message', 'unknown')}"}
+            except Exception as exc:
+                yield {"type": "mock_step", "node": "parse_attachment", "status": "error",
+                       "desc": f"❌ Lỗi khi parse {fname}: {exc}"}
+
+
         time.sleep(1)
         # Mock prioritize
         p_res = mock_prioritize(text)

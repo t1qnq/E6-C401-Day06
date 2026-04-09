@@ -204,18 +204,20 @@ def page_teacher_portal():
                 "receiver_scope": "all"
             }
             
-            attachment_list = []
+            # Build attachment dict with actual bytes for parse_attachment_node
+            attachment_dict = None
             if uploaded_file:
-                attachment_list.append({
-                    "name": uploaded_file.name,
-                    "type": uploaded_file.type,
-                    "size": uploaded_file.size
-                })
-                
+                attachment_dict = {
+                    "file": uploaded_file.read(),        # bytes thực
+                    "mime_type": uploaded_file.type,     # key đúng theo spec
+                    "file_name": uploaded_file.name,
+                }
+
             teacher_state = {
                 "teacher_note": title + " " + content,
                 "notification": new_notif_payload,
-                "attachments": attachment_list,
+                "attachment": attachment_dict,           # singular key theo parse_attachment_node
+                "attachments": [{"name": uploaded_file.name}] if uploaded_file else [],
                 "student_profile": {},
                 "user_request_detail": False
             }
