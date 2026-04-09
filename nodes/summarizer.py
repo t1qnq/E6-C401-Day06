@@ -71,7 +71,9 @@ def _summarize_with_mode(state: State, mode: str) -> State:
         return _apply_result(updated, summary_json, "fallback", ["missing_input"], tone_profile, notif_type)
 
     force_local = bool(updated.get("disable_llm") or updated.get("local_only"))
-    model = str(updated.get("openrouter_model") or os.getenv("OPENROUTER_MODEL", "minimax2.5:free"))
+    model = str(updated.get("openrouter_model") or os.getenv("OPENROUTER_MODEL", "minimax/minimax-m2.5:free"))
+    if model.strip() == "minimax2.5:free":
+        model = "minimax/minimax-m2.5:free"
 
     llm_status, llm_payload = _llm_summarize_json(
         notification=notification,
@@ -199,8 +201,8 @@ def _llm_summarize_json(
         return "no_api_key", {}
 
     try:
-        module = importlib.import_module("langchain_openai")
-        ChatOpenAI = getattr(module, "ChatOpenAI")
+        module = importlib.import_module("langchain_openrouter")
+        ChatOpenRouter = getattr(module, "ChatOpenRouter")
     except Exception:
         return "missing_dependency", {}
 
@@ -226,10 +228,10 @@ def _llm_summarize_json(
     }
 
     try:
-        llm = ChatOpenAI(
-            model=model,
-            api_key=api_key,
-            base_url="https://openrouter.ai/api/v1",
+        llm = ChatOpenRouter(
+            model_name=model,
+            openrouter_api_key=api_key,
+            openrouter_api_base="https://openrouter.ai/api/v1",
             temperature=0,
         )
         response = llm.invoke(
@@ -455,7 +457,7 @@ def main() -> None:
     parser.add_argument("--notification-id", type=str, default="", help="Select notification by id")
     parser.add_argument("--index", type=int, default=0, help="Select notification by index")
     parser.add_argument("--mode", choices=["brief", "detailed", "both"], default="both", help="Summary mode")
-    parser.add_argument("--model", type=str, default=os.getenv("OPENROUTER_MODEL", "minimax2.5:free"), help="OpenRouter model")
+    parser.add_argument("--model", type=str, default=os.getenv("OPENROUTER_MODEL", "minimax/minimax-m2.5:free"), help="OpenRouter model")
     parser.add_argument("--local-only", action="store_true", help="Disable LLM and force fallback")
     args = parser.parse_args()
 
